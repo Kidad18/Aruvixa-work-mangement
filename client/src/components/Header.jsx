@@ -133,7 +133,7 @@ export default function Header({ user, activeTab, setActiveTab, onLogout, onOpen
 
           {/* User Profile & Actions */}
           <div className="flex items-center gap-3">
-            {/* Quick Action Button for Assigning Work */}
+            {/*  Action Button for Assigning Work */}
             {user?.is_admin && (
               <button
                 onClick={onOpenAssignModal}

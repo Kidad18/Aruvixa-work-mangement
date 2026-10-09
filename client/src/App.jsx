@@ -145,7 +145,7 @@ export default function App() {
   const handleAddTeam = async (teamData) => {
     const res = await fetch('/api/teams', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-access-code': currentUser?.access_code || '' },
       body: JSON.stringify(teamData)
     });
 
@@ -160,7 +160,7 @@ export default function App() {
   const handleUpdateTeam = async (teamId, teamData) => {
     const res = await fetch(`/api/teams/${teamId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-access-code': currentUser?.access_code || '' },
       body: JSON.stringify(teamData)
     });
 
@@ -175,7 +175,10 @@ export default function App() {
   const handleDeleteTeam = async (teamId) => {
     if (!window.confirm('Are you sure you want to delete this team? Members will be unassigned.')) return;
 
-    const res = await fetch(`/api/teams/${teamId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/teams/${teamId}?access_code=${encodeURIComponent(currentUser?.access_code || '')}`, {
+      method: 'DELETE',
+      headers: { 'x-access-code': currentUser?.access_code || '' }
+    });
     if (res.ok) {
       await loadData();
     }
@@ -258,6 +261,7 @@ export default function App() {
           <TeamsManager
             teams={teams}
             members={members}
+            currentUser={currentUser}
             onAddTeam={handleAddTeam}
             onUpdateTeam={handleUpdateTeam}
             onDeleteTeam={handleDeleteTeam}

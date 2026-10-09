@@ -19,13 +19,39 @@ function generateAccessCode() {
   return code;
 }
 
+// Helper: ensure a team leader can only create tasks for their own team
+function authorizeTaskCreation(creatorId, targetTeamId) {
+  const creator = db.prepare('SELECT * FROM members WHERE id = ?').get(creatorId);
+  if (!creator) return; // allow if creator unknown (seeded tasks)
+  if (creator.is_admin) return; // admin can do anything
+  if (creator.is_team_leader) {
+    if (!targetTeamId) {
+      throw { status: 403, message: 'Team leaders must assign tasks to their own team.' };
+    }
+    if (creator.team_id !== targetTeamId) {
+      throw { status: 403, message: 'You can only create tasks for the team you lead.' };
+    }
+  }
+}
+
+// Helper: block team leaders from creating/editing/deleting teams
+function blockTeamLeaderFromTeamMgmt(accessCode) {
+  const envAdmin = (process.env.ADMIN_ACCESS_CODE || 'ARU-ADMIN').toUpperCase();
+  const clean = (accessCode || '').trim().toUpperCase();
+  if (clean === envAdmin) return; // admin ok
+  const member = db.prepare('SELECT * FROM members WHERE UPPER(access_code) = ?').get(clean);
+  if (member && member.is_team_leader && !member.is_admin) {
+    throw { status: 403, message: 'Team leaders are not allowed to create or modify teams. Please contact your admin.' };
+  }
+}
+
 // ----------------------------------------------------
 // SYSTEM CONFIG (SECURITY & PRODUCTION SETTINGS)
 // ----------------------------------------------------
 app.get('/api/config', (req, res) => {
   res.json({
     // Hide demo buttons on Vercel unless explicitly enabled via environment variable
-    showDemoCodes: process.env.SHOW_DEMO_CODES !== 'false',
+    showDemoCodes: false,
     isProduction: process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL)
   });
 });
@@ -38,7 +64,7 @@ app.post('/api/auth/login', (req, res) => {
   const { accessCode } = req.body;
 
   if (!accessCode) {
-    return res.status(400).json({ error: 'Please enter your unique access code' });
+    return res.status(400).json({ error: 'Please enter your  access code' });
   }
 
   const cleanCode = accessCode.trim().toUpperCase();
@@ -333,7 +359,9 @@ app.get('/api/teams', (req, res) => {
 
 app.post('/api/teams', (req, res) => {
   try {
-    const { name, description, leader_id } = req.body;
+    const { name, description, leader_id, access_code } = req.body;
+    const callerCode = req.headers['x-access-code'] || access_code || '';
+    blockTeamLeaderFromTeamMgmt(callerCode);
 
     if (!name) {
       return res.status(400).json({ error: 'Team name is required.' });
@@ -358,14 +386,17 @@ app.post('/api/teams', (req, res) => {
 
     res.status(201).json({ message: 'Team created successfully!', team: createdTeam });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || String(error) });
   }
 });
 
 app.put('/api/teams/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, leader_id } = req.body;
+    const { name, description, leader_id, access_code } = req.body;
+    const callerCode = req.headers['x-access-code'] || access_code || '';
+    blockTeamLeaderFromTeamMgmt(callerCode);
 
     const currentTeam = db.prepare('SELECT leader_id FROM teams WHERE id = ?').get(id);
 
@@ -393,20 +424,25 @@ app.put('/api/teams/:id', (req, res) => {
 
     res.json({ message: 'Team updated successfully!', team: updated });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || String(error) });
   }
 });
 
 app.delete('/api/teams/:id', (req, res) => {
   try {
     const { id } = req.params;
+    const callerCode = req.headers['x-access-code'] || req.query.access_code || '';
+    blockTeamLeaderFromTeamMgmt(callerCode);
+
     db.prepare('UPDATE members SET team_id = NULL, is_team_leader = 0 WHERE team_id = ?').run(id);
     db.prepare('UPDATE tasks SET team_id = NULL WHERE team_id = ?').run(id);
     db.prepare('DELETE FROM teams WHERE id = ?').run(id);
 
     res.json({ message: 'Team removed successfully' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || String(error) });
   }
 });
 
@@ -614,8 +650,7 @@ app.post('/api/tasks', (req, res) => {
       return res.status(400).json({ error: 'Task Title and Due Date & Time are required!' });
     }
 
-    const taskId = 'task_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
-
+    // Resolve effective team_id first (may come from assignee's team)
     let taskTeamId = team_id || null;
     if (!taskTeamId && assigned_to) {
       const assignedMember = db.prepare('SELECT team_id FROM members WHERE id = ?').get(assigned_to);
@@ -623,6 +658,13 @@ app.post('/api/tasks', (req, res) => {
         taskTeamId = assignedMember.team_id;
       }
     }
+
+    // Permission check: team leaders can only create tasks for their own team
+    if (created_by) {
+      authorizeTaskCreation(created_by, taskTeamId);
+    }
+
+    const taskId = 'task_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
 
     db.prepare(`
       INSERT INTO tasks (id, title, description, assigned_to, team_id, role_required, priority, status, due_date, estimated_hours, created_by)
@@ -643,7 +685,8 @@ app.post('/api/tasks', (req, res) => {
 
     res.status(201).json({ message: 'Task assigned successfully!', task: newTask });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const status = error.status || 500;
+    res.status(status).json({ error: error.message || String(error) });
   }
 });
 

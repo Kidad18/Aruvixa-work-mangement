@@ -98,11 +98,7 @@ function initDB() {
     `);
 
     const membersData = [
-      { id: 'mem_admin', name: 'Ganesh (Aruvixa Lead)', email: 'ganesh@aruvixa.com', role: 'Founder & Product Director', access_code: 'ARU-ADMIN', is_admin: 1, avatar_color: '#6366F1' },
-      { id: 'mem_1', name: 'Sethu', email: 'sethu@aruvixa.com', role: 'Senior Full Stack Engineer', access_code: 'ARU-1024', is_admin: 0, avatar_color: '#10B981' },
-      { id: 'mem_2', name: 'Priya Sharma', email: 'priya@aruvixa.com', role: 'Lead UI/UX Designer', access_code: 'ARU-2048', is_admin: 0, avatar_color: '#EC4899' },
-      { id: 'mem_3', name: 'Rahul Verma', email: 'rahul@aruvixa.com', role: 'Backend Systems Engineer', access_code: 'ARU-4096', is_admin: 0, avatar_color: '#F59E0B' },
-      { id: 'mem_4', name: 'Ananya Roy', email: 'ananya@aruvixa.com', role: 'QA & Automation Lead', access_code: 'ARU-8192', is_admin: 0, avatar_color: '#8B5CF6' }
+      
     ];
 
     membersData.forEach(m => insertMember.run(m.id, m.name, m.email, m.role, m.access_code, m.is_admin, m.avatar_color));

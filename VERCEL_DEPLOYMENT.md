@@ -47,12 +47,3 @@ The project is pre-configured with `vercel.json` and a serverless API function e
 
 ---
 
-## 🔑 Demo Access Codes on Vercel
-
-| Teammate | Assigned Team | Unique Access Code | Access Level |
-|---|---|---|---|
-| **Ganesh (Aruvixa Lead)** | Product Management | `ARU-ADMIN` | **Admin / Manager** |
-| **Sethu** | Frontend & Mobile Engineering | `ARU-1024` | Teammate / Leader |
-| **Priya Sharma** | UI/UX Design Studio | `ARU-2048` | Teammate / Leader |
-| **Rahul Verma** | Backend Systems & Infra | `ARU-4096` | Teammate / Leader |
-| **Ananya Roy** | QA & Automation Guild | `ARU-8192` | Teammate / Leader |

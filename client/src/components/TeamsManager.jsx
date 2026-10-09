@@ -4,7 +4,9 @@ import {
   Trash2, Edit2, AlertCircle, Sparkles, FolderKanban, CheckCircle2, User, KeyRound
 } from 'lucide-react';
 
-export default function TeamsManager({ teams, members, onAddTeam, onUpdateTeam, onDeleteTeam }) {
+export default function TeamsManager({ teams, members, currentUser, onAddTeam, onUpdateTeam, onDeleteTeam }) {
+  const isAdmin = currentUser?.is_admin || false;
+  const isLeader = currentUser?.is_team_leader && !isAdmin;
   const [showModal, setShowModal] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
 
@@ -80,13 +82,15 @@ export default function TeamsManager({ teams, members, onAddTeam, onUpdateTeam, 
           </p>
         </div>
 
-        <button
-          onClick={openCreateModal}
-          className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create New Team</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={openCreateModal}
+            className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create New Team</span>
+          </button>
+        )}
       </div>
 
       {/* Teams Grid */}
@@ -116,22 +120,24 @@ export default function TeamsManager({ teams, members, onAddTeam, onUpdateTeam, 
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(team)}
-                      title="Edit Team & Leader"
-                      className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteTeam(team.id)}
-                      title="Delete Team"
-                      className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEditModal(team)}
+                        title="Edit Team & Leader"
+                        className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDeleteTeam(team.id)}
+                        title="Delete Team"
+                        className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Team Leader Banner */}
