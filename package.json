@@ -1,0 +1,32 @@
+{
+  "name": "aruvixa-company-portal",
+  "version": "1.0.0",
+  "description": "Aruvixa Company Portal - Task Assignment, Role Management & Unique Access Code Auth",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev:server": "node server/server.js",
+    "dev:client": "npm.cmd run dev --prefix client",
+    "dev": "concurrently -k \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "npm.cmd run build --prefix client"
+  },
+  "keywords": [
+    "aruvixa",
+    "portal",
+    "tasks",
+    "roles",
+    "management"
+  ],
+  "author": "Aruvixa Tech",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "nanoid": "^5.1.6"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
